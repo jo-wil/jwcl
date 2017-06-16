@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "listEmittedFiles": true,
+        "target": "es6",
+        "strict": true,
+        "sourceMap": true,
+        "lib": [
+            "dom",
+            "es7"
+        ]
+    },
+    "files": [
+       "./jwcl.ts"
+    ]
+}

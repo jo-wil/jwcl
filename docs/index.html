@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8"/>
+        <title>JWCL</title>
+        <link rel="stylesheet" href="https://unpkg.com/purecss@0.6.2/build/pure-min.css" integrity="sha384-UQiGfs9ICog+LwheBSRCt1o5cbyKIHbwjWscjemyBMT9YCUMZffs6UqUTd0hObXD" crossorigin="anonymous"/>
+    </head>
+    <body>
+        <div>
+            <h1 style="text-align: center; background: purple; color: white; margin: 0; padding: 1%"> Joey's Web Crypto Library </h1>
+            <div class="pure-menu pure-menu-horizontal">
+                <a href="#" class="pure-menu-heading pure-menu-link" style="color: black;">JWCL</a>
+                <ul class="pure-menu-list">
+                    <li class="pure-menu-item"><a href="#" class="pure-menu-link" style="color: black;">Docs</a></li>
+                    <li class="pure-menu-item"><a href="#" class="pure-menu-link" style="color: black;">Tests</a></li>
+                    <li class="pure-menu-item"><a href="https://github.com/jo-wil/jwcl/" class="pure-menu-link" style="color: black;">Github</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="pure-g">
+            <div class="pure-u-1-4">
+            </div>
+            <div class="pure-u-1-2">
+                <div>
+                    <p>
+                        Joey's Web Crypto Library is a wrapper around the browser based Javascript 
+                        <a href="https://www.w3.org/TR/WebCryptoAPI/"> Web Crypto API </a>
+                        and the Node.js <a href="https://nodejs.org/api/crypto.html"> Crypto Module </a>.
+                        JWCL provides a high level interface, secure defaults, informative error messages and network portable output. 
+                        JWCL can be used interchangeably between the browser and server.
+                    </p>
+                    <p>
+                        JWCL is easy to get started with. <br/><br/>
+                        To encrypt run <br/><br/>
+                        <code> const encryptedMessage = jwcl.encrypt('secret', 'message'); </code> <br/><br/>
+                        and to decrypt <br/><br/>
+                        <code> jwcl.decrypt('secret', encryptedMessage); // returns 'message' </code> <br/><br/>
+                    </p> 
+                </div>
+            </div>
+            <div class="pure-u-1-4">
+            </div>
+        </div>
+    </body>
+</html>
