@@ -6,6 +6,7 @@
         "sourceMap": true,
         "lib": [
             "dom",
+            "es6",
             "es7"
         ]
     },

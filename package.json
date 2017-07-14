@@ -1,0 +1,27 @@
+{
+  "name": "jwcl",
+  "version": "1.0.0",
+  "description": "",
+  "main": "jwcl.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "qunit -c jwcl.js -t tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jo-wil/jwcl.git"
+  },
+  "author": "Joey Wilson",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jo-wil/jwcl/issues"
+  },
+  "homepage": "https://github.com/jo-wil/jwcl#readme",
+  "devDependencies": {
+    "@types/node": "^8.0.12",
+    "@types/text-encoding": "0.0.31",
+    "qunit": "^1.0.0"
+  }
+}

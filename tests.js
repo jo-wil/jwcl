@@ -1,13 +1,12 @@
 // JWCL
 
+var nb = (function () {
+    return (typeof module !== 'undefined' && module.exports) ? 'node' : 'browser';
+})();
+
+
 QUnit.test('jwcl', function (assert) {
     assert.ok(jwcl, 'exists');
-    assert.ok(jwcl._internal, 'internal exists');
-    assert.ok(jwcl._internal.stob, 'stob exists');
-    assert.ok(jwcl._internal.btos, 'btos exists');
-    assert.ok(jwcl._internal.byteToHex, 'byteToHex exists');
-    assert.ok(jwcl._internal.htob, 'htob exists');
-    assert.ok(jwcl._internal.btoh, 'btoh exists');
     assert.ok(jwcl.encrypt, 'encrypt exists');
     assert.ok(jwcl.decrypt, 'decrypt exists');
     assert.ok(jwcl.sign, 'sign exists');
@@ -16,6 +15,7 @@ QUnit.test('jwcl', function (assert) {
     assert.ok(jwcl.random, 'random exists');
     assert.ok(jwcl.private, 'private exists');
     assert.ok(jwcl.private.key, 'private key exists');
+    assert.ok(jwcl.private.kdf, 'private kdf exists');
     assert.ok(jwcl.private.encrypt, 'private encrypt exists');
     assert.ok(jwcl.private.decrypt, 'private decrypt exists');
     assert.ok(jwcl.private.sign, 'private sign exists');
@@ -25,36 +25,78 @@ QUnit.test('jwcl', function (assert) {
     assert.ok(jwcl.public.encrypt, 'public encrypt exists');
     assert.ok(jwcl.public.decrypt, 'public decrypt exists');
     assert.ok(jwcl.public.sign, 'public sign exists');
+    
+    if (nb === 'browser') {
+        assert.ok(jwcl._internal, 'internal exists');
+        assert.ok(jwcl._internal.stob, 'stob exists');
+        assert.ok(jwcl._internal.btos, 'btos exists');
+        assert.ok(jwcl._internal.byteToHex, 'byteToHex exists');
+        assert.ok(jwcl._internal.htob, 'htob exists');
+        assert.ok(jwcl._internal.btoh, 'btoh exists');
+    }
 });
 
 // Internal
 
 QUnit.test('jwcl._internal', function (assert) {
-    assert.strictEqual(jwcl._internal.byteToHex(65), '41', 'byteToHex "A"');
-    assert.strictEqual(jwcl._internal.byteToHex(10), '0a', 'byteToHex 10');
-    assert.strictEqual(jwcl._internal.btoh(new Uint8Array([10,65,129])), '0a4181', 'btoh 10,65,129');
-    assert.deepEqual(jwcl._internal.htob('0a4181'), new Uint8Array([10,65,129]), 'htob 0a4181');
-    assert.strictEqual(jwcl._internal.btoh(jwcl._internal.stob('abc')), '616263', 'btos "abc"');
-    assert.strictEqual(jwcl._internal.btos(jwcl._internal.htob('616263')), 'abc', 'stob "616263"');
-    assert.throws(function () {
-        jwcl._internal.htob('zzzz');
-    }, {
-        name: 'JWCL',
-        message: 'jwcl._internal.htob input is not hex'
-    });
+    if (nb === 'browser') {
+        assert.strictEqual(jwcl._internal.btoh(jwcl._internal.stob('abc')), '616263', 'btos "abc"');
+        assert.strictEqual(jwcl._internal.btos(jwcl._internal.htob('616263')), 'abc', 'stob "616263"');
+        assert.strictEqual(jwcl._internal.byteToHex(65), '41', 'byteToHex "A"');
+        assert.strictEqual(jwcl._internal.byteToHex(10), '0a', 'byteToHex 10');
+        assert.strictEqual(jwcl._internal.btoh(new Uint8Array([10,65,129])), '0a4181', 'btoh 10,65,129');
+        assert.deepEqual(jwcl._internal.htob('0a4181'), new Uint8Array([10,65,129]), 'htob 0a4181');
+        
+        assert.throws(function () {
+            jwcl._internal.htob('zzzz');
+        }, {
+            name: 'JWCL',
+            message: 'jwcl._internal.htob input is not hex'
+        });    
+    } else {
+        assert.expect(0);
+    }
 });
 
 // Private
 
+// Kdf
+
+QUnit.test('jwcl.private.kdf', function (assert) {
+    var done = assert.async();
+    jwcl.private.kdf('secret') 
+    .then(function (result) {
+        console.log('kdf', result);
+        assert.strictEqual(32, result.length, 'length');
+        assert.strictEqual('string', typeof result, 'type');
+        done();
+    });
+});
+
 // Key
 
 QUnit.test('jwcl.private.key', function (assert) {
-    var done = assert.async();
+  
+    var done1 = assert.async();
+    var done2 = assert.async();
+    
+    Promise.all([
+        jwcl.private.key(),
+        jwcl.private.key('encrypt')
+    ])
+    .then(function (results) {
+        assert.strictEqual(32, results[0].length, 'length');
+        assert.strictEqual('string', typeof results[0], 'type');
+        assert.strictEqual(32, results[1].length, 'length');
+        assert.strictEqual('string', typeof results[1], 'type');
+        done1();
+    });
+  
     jwcl.private.key('zzz')
     .catch(function (err) {
         assert.strictEqual(err.name, 'JWCL');
         assert.strictEqual(err.message, 'jwcl.private.key zzz is not a supported operation');
-        done();  
+        done2();  
     });
 });
 
@@ -103,8 +145,13 @@ QUnit.test('jwcl.private sign verify', function (assert) {
 // Random
 
 QUnit.test('jwcl.random', function (assert) {
-    assert.strictEqual(32, jwcl.random(16).length, 'length');
-    assert.strictEqual('string', typeof jwcl.random(16), 'type');
+    var done = assert.async();
+    jwcl.random(16)
+    .then(function (result) {
+        assert.strictEqual(32, result.length, 'length');
+        assert.strictEqual('string', typeof result, 'type');
+        done();
+    });
 });
 
 // Hash
@@ -113,8 +160,8 @@ QUnit.test('jwcl.hash', function (assert) {
     var done = assert.async();
     Promise.all([
         jwcl.hash('abc'),
-        jwcl.hash('abc', 'SHA-256'),
-        jwcl.hash('abc', 'SHA-1')
+        jwcl.hash('abc', nb === 'browser' ? 'SHA-256' : 'sha256'),
+        jwcl.hash('abc', nb === 'browser' ? 'SHA-1' : 'sha1')
     ])
     .then(function (results) {
         assert.strictEqual(results[0], 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad', 'simple hash');
