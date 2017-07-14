@@ -1,6 +1,6 @@
 // JWCL
 
-var nb = (function () {
+var env = (function () {
     return (typeof module !== 'undefined' && module.exports) ? 'node' : 'browser';
 })();
 
@@ -26,7 +26,7 @@ QUnit.test('jwcl', function (assert) {
     assert.ok(jwcl.public.decrypt, 'public decrypt exists');
     assert.ok(jwcl.public.sign, 'public sign exists');
     
-    if (nb === 'browser') {
+    if (env === 'browser') {
         assert.ok(jwcl._internal, 'internal exists');
         assert.ok(jwcl._internal.stob, 'stob exists');
         assert.ok(jwcl._internal.btos, 'btos exists');
@@ -39,7 +39,7 @@ QUnit.test('jwcl', function (assert) {
 // Internal
 
 QUnit.test('jwcl._internal', function (assert) {
-    if (nb === 'browser') {
+    if (env === 'browser') {
         assert.strictEqual(jwcl._internal.btoh(jwcl._internal.stob('abc')), '616263', 'btos "abc"');
         assert.strictEqual(jwcl._internal.btos(jwcl._internal.htob('616263')), 'abc', 'stob "616263"');
         assert.strictEqual(jwcl._internal.byteToHex(65), '41', 'byteToHex "A"');
@@ -159,8 +159,8 @@ QUnit.test('jwcl.hash', function (assert) {
     var done = assert.async();
     Promise.all([
         jwcl.hash('abc'),
-        jwcl.hash('abc', nb === 'browser' ? 'SHA-256' : 'sha256'),
-        jwcl.hash('abc', nb === 'browser' ? 'SHA-1' : 'sha1')
+        jwcl.hash('abc', env === 'browser' ? 'SHA-256' : 'sha256'),
+        jwcl.hash('abc', env === 'browser' ? 'SHA-1' : 'sha1')
     ])
     .then(function (results) {
         assert.strictEqual(results[0], 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad', 'simple hash');

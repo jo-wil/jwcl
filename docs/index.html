@@ -25,16 +25,16 @@
                     <p>
                         Joey's Web Crypto Library is a wrapper around the browser based Javascript 
                         <a href="https://www.w3.org/TR/WebCryptoAPI/"> Web Crypto API </a>
-                        and the Node.js <a href="https://nodejs.org/api/crypto.html"> Crypto Module </a>.
-                        JWCL provides a high level interface, secure defaults, informative error messages and network portable output. 
+                        and the Node <a href="https://nodejs.org/api/crypto.html"> Crypto Module </a>.
+                        JWCL provides a high level interface, secure defaults, and network portable output. 
                         JWCL can be used interchangeably between the browser and server.
                     </p>
                     <p>
                         JWCL is easy to get started with. <br/><br/>
                         To encrypt run <br/><br/>
-                        <code> const encryptedMessage = jwcl.encrypt('secret', 'message'); </code> <br/><br/>
+                        <code> const encryptedMessage = await jwcl.encrypt('secret', 'message'); </code> <br/><br/>
                         and to decrypt <br/><br/>
-                        <code> jwcl.decrypt('secret', encryptedMessage); // returns 'message' </code> <br/><br/>
+                        <code> await jwcl.decrypt('secret', encryptedMessage); // returns 'message' </code> <br/><br/>
                     </p> 
                 </div>
             </div>

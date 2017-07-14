@@ -1,9 +1,8 @@
 type Hex = string;
 type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
 
-const jwcl = (() => {
+(() => {
 
-    const nb = (() => (typeof module !== 'undefined' && module.exports) ? 'node' : 'browser')();
 
     // ## Crypto Constants
 
@@ -349,7 +348,9 @@ const jwcl = (() => {
         };
     };
 
-    const _jwcl = nb === 'browser' ? browser() : node();
+    const env = (() => (typeof module !== 'undefined' && module.exports) ? 'node' : 'browser')();
+    
+    const _jwcl = env === 'browser' ? browser() : node();
 
     // ## Encrypt
         
@@ -386,10 +387,10 @@ const jwcl = (() => {
         verify: verify        
     });
 
-    if (nb === 'browser') {
-        return jwcl;
-    } else if (nb === 'node') {
+    if (env === 'browser') {
+        this.jwcl = jwcl;
+    } else if (env === 'node') {
         exports.jwcl = jwcl;
     }
 
-})();
+}).call(this);

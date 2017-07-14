@@ -7,8 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const jwcl = (() => {
-    const nb = (() => (typeof module !== 'undefined' && module.exports) ? 'node' : 'browser')();
+(() => {
     // ## Crypto Constants
     const AES_BLOCK_SIZE_BYTES = 16;
     const AES_IV_SIZE = AES_BLOCK_SIZE_BYTES;
@@ -290,7 +289,8 @@ const jwcl = (() => {
             hash: hash
         };
     };
-    const _jwcl = nb === 'browser' ? browser() : node();
+    const env = (() => (typeof module !== 'undefined' && module.exports) ? 'node' : 'browser')();
+    const _jwcl = env === 'browser' ? browser() : node();
     // ## Encrypt
     const encrypt = (secret, message) => __awaiter(this, void 0, void 0, function* () {
         const key = yield _jwcl.private.kdf(secret);
@@ -317,11 +317,11 @@ const jwcl = (() => {
         sign: sign,
         verify: verify
     });
-    if (nb === 'browser') {
-        return jwcl;
+    if (env === 'browser') {
+        this.jwcl = jwcl;
     }
-    else if (nb === 'node') {
+    else if (env === 'node') {
         exports.jwcl = jwcl;
     }
-})();
+}).call(this);
 //# sourceMappingURL=jwcl.js.map
