@@ -66,7 +66,6 @@ QUnit.test('jwcl.private.kdf', function (assert) {
     var done = assert.async();
     jwcl.private.kdf('secret') 
     .then(function (result) {
-        console.log('kdf', result);
         assert.strictEqual(32, result.length, 'length');
         assert.strictEqual('string', typeof result, 'type');
         done();

@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 const jwcl = (() => {
+    const nb = (() => (typeof module !== 'undefined' && module.exports) ? 'node' : 'browser')();
     // ## Crypto Constants
     const AES_BLOCK_SIZE_BYTES = 16;
     const AES_IV_SIZE = AES_BLOCK_SIZE_BYTES;
@@ -157,26 +158,6 @@ const jwcl = (() => {
             const hash = yield subtle.digest(algorithm, stob(plaintext));
             return btoh(hash);
         });
-        // ## Encrypt
-        const encrypt = (secret, message) => __awaiter(this, void 0, void 0, function* () {
-            const key = yield privateKdf(secret);
-            return yield privateEncrypt(key, message);
-        });
-        // ## Decrypt
-        const decrypt = (secret, encryptedMessage) => __awaiter(this, void 0, void 0, function* () {
-            const key = yield privateKdf(secret);
-            return yield privateDecrypt(key, encryptedMessage);
-        });
-        // ## Sign
-        const sign = (secret, message) => __awaiter(this, void 0, void 0, function* () {
-            const key = yield privateKdf(secret);
-            return yield privateSign(key, message);
-        });
-        // ## Verify
-        const verify = (secret, signature, message) => __awaiter(this, void 0, void 0, function* () {
-            const key = yield privateKdf(secret);
-            return yield privateVerify(key, signature, message);
-        });
         // ## Export
         return {
             _internal: {
@@ -202,11 +183,7 @@ const jwcl = (() => {
                 verify: NOT_IMPLEMENTED
             },
             random: random,
-            hash: hash,
-            encrypt: encrypt,
-            decrypt: decrypt,
-            sign: sign,
-            verify: verify
+            hash: hash
         };
     };
     // # Node
@@ -293,26 +270,6 @@ const jwcl = (() => {
             hash.update(plaintext);
             return hash.digest('hex');
         });
-        // ## Encrypt
-        const encrypt = (secret, message) => __awaiter(this, void 0, void 0, function* () {
-            const key = yield privateKdf(secret);
-            return yield privateEncrypt(key, message);
-        });
-        // ## Decrypt
-        const decrypt = (secret, encryptedMessage) => __awaiter(this, void 0, void 0, function* () {
-            const key = yield privateKdf(secret);
-            return yield privateDecrypt(key, encryptedMessage);
-        });
-        // ## Sign
-        const sign = (secret, message) => __awaiter(this, void 0, void 0, function* () {
-            const key = yield privateKdf(secret);
-            return yield privateSign(key, message);
-        });
-        // ## Verify
-        const verify = (secret, signature, message) => __awaiter(this, void 0, void 0, function* () {
-            const key = yield privateKdf(secret);
-            return yield privateVerify(key, signature, message);
-        });
         return {
             private: {
                 key: privateKey,
@@ -330,18 +287,41 @@ const jwcl = (() => {
                 verify: NOT_IMPLEMENTED
             },
             random: random,
-            hash: hash,
-            encrypt: encrypt,
-            decrypt: decrypt,
-            sign: sign,
-            verify: verify
+            hash: hash
         };
     };
-    if (typeof module !== 'undefined' && module.exports) {
-        exports.jwcl = node();
+    const _jwcl = nb === 'browser' ? browser() : node();
+    // ## Encrypt
+    const encrypt = (secret, message) => __awaiter(this, void 0, void 0, function* () {
+        const key = yield _jwcl.private.kdf(secret);
+        return yield _jwcl.private.encrypt(key, message);
+    });
+    // ## Decrypt
+    const decrypt = (secret, encryptedMessage) => __awaiter(this, void 0, void 0, function* () {
+        const key = yield _jwcl.private.kdf(secret);
+        return yield _jwcl.private.decrypt(key, encryptedMessage);
+    });
+    // ## Sign
+    const sign = (secret, message) => __awaiter(this, void 0, void 0, function* () {
+        const key = yield _jwcl.private.kdf(secret);
+        return yield _jwcl.private.sign(key, message);
+    });
+    // ## Verify
+    const verify = (secret, signature, message) => __awaiter(this, void 0, void 0, function* () {
+        const key = yield _jwcl.private.kdf(secret);
+        return yield _jwcl.private.verify(key, signature, message);
+    });
+    const jwcl = Object.assign({}, _jwcl, {
+        encrypt: encrypt,
+        decrypt: decrypt,
+        sign: sign,
+        verify: verify
+    });
+    if (nb === 'browser') {
+        return jwcl;
     }
-    else {
-        return browser();
+    else if (nb === 'node') {
+        exports.jwcl = jwcl;
     }
 })();
 //# sourceMappingURL=jwcl.js.map

@@ -3,6 +3,8 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
 
 const jwcl = (() => {
 
+    const nb = (() => (typeof module !== 'undefined' && module.exports) ? 'node' : 'browser')();
+
     // ## Crypto Constants
 
     const AES_BLOCK_SIZE_BYTES = 16;
@@ -184,34 +186,6 @@ const jwcl = (() => {
             return btoh(hash);    
         };
 
-        // ## Encrypt
-        
-        const encrypt = async (secret: string, message: string): Promise<Hex> => {
-            const key = await privateKdf(secret);
-            return await privateEncrypt(key, message);
-        };
-        
-        // ## Decrypt
-
-        const decrypt = async (secret: string, encryptedMessage: Hex): Promise<string> => {
-            const key = await privateKdf(secret);
-            return await privateDecrypt(key, encryptedMessage);
-        };
-        
-        // ## Sign
-        
-        const sign = async (secret: string, message: string): Promise<Hex> => {
-            const key = await privateKdf(secret);
-            return await privateSign(key, message);
-        };
-        
-        // ## Verify
-        
-        const verify = async (secret: string, signature: Hex, message: string): Promise<boolean> => {
-            const key = await privateKdf(secret);
-            return await privateVerify(key, signature, message);
-        };
-
         // ## Export
 
         return {
@@ -238,11 +212,7 @@ const jwcl = (() => {
                 verify: NOT_IMPLEMENTED
             },
             random: random,
-            hash: hash,
-            encrypt: encrypt,
-            decrypt: decrypt,
-            sign: sign,
-            verify: verify
+            hash: hash
         };
     };
 
@@ -357,34 +327,7 @@ const jwcl = (() => {
             return hash.digest('hex');
         };
 
-        // ## Encrypt
         
-        const encrypt = async (secret: string, message: string): Promise<Hex> => {
-            const key = await privateKdf(secret);
-            return await privateEncrypt(key, message);
-        };
-        
-        // ## Decrypt
-
-        const decrypt = async (secret: string, encryptedMessage: Hex): Promise<string> => {
-            const key = await privateKdf(secret);
-            return await privateDecrypt(key, encryptedMessage);
-        };
-        
-        // ## Sign
-        
-        const sign = async (secret: string, message: string): Promise<Hex> => {
-            const key = await privateKdf(secret);
-            return await privateSign(key, message);
-        };
-        
-        // ## Verify
-        
-        const verify = async (secret: string, signature: Hex, message: string): Promise<boolean> => {
-            const key = await privateKdf(secret);
-            return await privateVerify(key, signature, message);
-        };
-
         return {
             private: {
                 key: privateKey, 
@@ -402,18 +345,51 @@ const jwcl = (() => {
                 verify: NOT_IMPLEMENTED
             },
             random: random, 
-            hash: hash,
-            encrypt: encrypt,
-            decrypt: decrypt,
-            sign: sign,
-            verify: verify
+            hash: hash
         };
     };
 
-    if (typeof module !== 'undefined' && module.exports) {
-        exports.jwcl = node();
-    } else {
-        return browser();
+    const _jwcl = nb === 'browser' ? browser() : node();
+
+    // ## Encrypt
+        
+    const encrypt = async (secret: string, message: string): Promise<Hex> => {
+        const key = await _jwcl.private.kdf(secret);
+        return await _jwcl.private.encrypt(key, message);
+    };
+    
+    // ## Decrypt
+
+    const decrypt = async (secret: string, encryptedMessage: Hex): Promise<string> => {
+        const key = await _jwcl.private.kdf(secret);
+        return await _jwcl.private.decrypt(key, encryptedMessage);
+    };
+    
+    // ## Sign
+    
+    const sign = async (secret: string, message: string): Promise<Hex> => {
+        const key = await _jwcl.private.kdf(secret);
+        return await _jwcl.private.sign(key, message);
+    };
+    
+    // ## Verify
+    
+    const verify = async (secret: string, signature: Hex, message: string): Promise<boolean> => {
+        const key = await _jwcl.private.kdf(secret);
+        return await _jwcl.private.verify(key, signature, message);
+    };
+
+    const jwcl = Object.assign({}, _jwcl, {
+        encrypt: encrypt,
+        decrypt: decrypt,
+        sign: sign,
+        verify: verify        
+    });
+
+    if (nb === 'browser') {
+        return jwcl;
+    } else if (nb === 'node') {
+        exports.jwcl = jwcl;
     }
 
 })();
