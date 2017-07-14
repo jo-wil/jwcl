@@ -245,7 +245,7 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>
-        <span class="hljs-keyword">const</span> privateKdf = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
+        <span class="hljs-keyword">const</span> purePrivateKdf = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
             <span class="hljs-keyword">const</span> masterKey = <span class="hljs-keyword">await</span> subtle.importKey(<span class="hljs-string">'raw'</span>, stob(secret), { 
                 name: <span class="hljs-string">'PBKDF2'</span> 
             }, <span class="hljs-literal">false</span>, [<span class="hljs-string">'deriveKey'</span>]);
@@ -276,8 +276,7 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>
-        <span class="hljs-keyword">const</span> privateEncrypt = <span class="hljs-keyword">async</span> (key: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
-            <span class="hljs-keyword">const</span> iv = <span class="hljs-keyword">await</span> random(AES_IV_SIZE);
+        <span class="hljs-keyword">const</span> purePrivateEncrypt = <span class="hljs-keyword">async</span>(iv: Hex, key: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
             <span class="hljs-keyword">const</span> algorithm = {
                 name: AES,
                 iv: htob(iv)
@@ -285,6 +284,11 @@
             <span class="hljs-keyword">const</span> cryptoKey = <span class="hljs-keyword">await</span> subtle.importKey(<span class="hljs-string">'raw'</span>, htob(key), algorithm, <span class="hljs-literal">false</span>, [<span class="hljs-string">'encrypt'</span>]);
             <span class="hljs-keyword">const</span> ciphertext = <span class="hljs-keyword">await</span> subtle.encrypt(algorithm, cryptoKey, stob(plaintext));
             <span class="hljs-keyword">return</span> iv + btoh(ciphertext);
+        };
+
+        <span class="hljs-keyword">const</span> privateEncrypt = <span class="hljs-keyword">async</span> (key: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
+            <span class="hljs-keyword">const</span> iv = <span class="hljs-keyword">await</span> random(AES_IV_SIZE);
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> purePrivateEncrypt(iv, key, plaintext);
         };</pre></div></div>
             
         </li>
@@ -301,7 +305,7 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>        
-        <span class="hljs-keyword">const</span> privateDecrypt = <span class="hljs-keyword">async</span> (key: Hex, ciphertext: Hex): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">string</span>&gt; =&gt; {
+        <span class="hljs-keyword">const</span> purePrivateDecrypt = <span class="hljs-keyword">async</span> (key: Hex, ciphertext: Hex): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">string</span>&gt; =&gt; {
             <span class="hljs-keyword">const</span> binaryCiphertext = htob(ciphertext);
             <span class="hljs-keyword">const</span> algorithm = {
                 name: AES,
@@ -326,7 +330,7 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>     
-        <span class="hljs-keyword">const</span> privateSign = <span class="hljs-keyword">async</span> (key: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
+        <span class="hljs-keyword">const</span> purePrivateSign = <span class="hljs-keyword">async</span> (key: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
             <span class="hljs-keyword">const</span> algorithm = {
                 name: <span class="hljs-string">'HMAC'</span>,
                 hash: HASH
@@ -350,7 +354,7 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>        
-        <span class="hljs-keyword">const</span> privateVerify = <span class="hljs-keyword">async</span> (key: Hex, signature: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">boolean</span>&gt; =&gt; {
+        <span class="hljs-keyword">const</span> purePrivateVerify = <span class="hljs-keyword">async</span> (key: Hex, signature: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">boolean</span>&gt; =&gt; {
             <span class="hljs-keyword">const</span> algorithm = {
                 name: <span class="hljs-string">'HMAC'</span>,
                 hash: HASH
@@ -422,11 +426,12 @@
             },
             <span class="hljs-keyword">private</span>: {
                 key: privateKey,
-                kdf: privateKdf, 
+                kdf: purePrivateKdf, 
+                _encrypt: purePrivateEncrypt,
                 encrypt: privateEncrypt,
-                decrypt: privateDecrypt,
-                sign: privateSign,
-                verify: privateVerify
+                decrypt: purePrivateDecrypt,
+                sign: purePrivateSign,
+                verify: purePrivateVerify
             },
             <span class="hljs-keyword">public</span>: {
                 key: NOT_IMPLEMENTED, 
@@ -526,7 +531,7 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>        
-        <span class="hljs-keyword">const</span> privateKdf = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
+        <span class="hljs-keyword">const</span> purePrivateKdf = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
             <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>&lt;Hex&gt;<span class="hljs-function">(<span class="hljs-params">(<span class="hljs-params">resolve, reject</span>) =&gt; {
                 crypto.pbkdf2(<span class="hljs-params">
                     secret, 
@@ -561,11 +566,15 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>
-        <span class="hljs-keyword">const</span> privateEncrypt = <span class="hljs-keyword">async</span> (key: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
-            <span class="hljs-keyword">const</span> iv = <span class="hljs-keyword">await</span> random(AES_IV_SIZE);
+        <span class="hljs-keyword">const</span> purePrivateEncrypt = <span class="hljs-keyword">async</span>(iv: Hex, key: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
             <span class="hljs-keyword">const</span> cipher = crypto.createCipheriv(AES, Buffer.from(key, <span class="hljs-string">'hex'</span>), Buffer.from(iv, <span class="hljs-string">'hex'</span>));
             <span class="hljs-keyword">const</span> ciphertext = iv + cipher.update(plaintext, <span class="hljs-string">'utf8'</span>, <span class="hljs-string">'hex'</span>) + cipher.final(<span class="hljs-string">'hex'</span>);
             <span class="hljs-keyword">return</span> ciphertext + cipher.getAuthTag().toString(<span class="hljs-string">'hex'</span>);
+        };
+
+        <span class="hljs-keyword">const</span> privateEncrypt = <span class="hljs-keyword">async</span> (key: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
+            <span class="hljs-keyword">const</span> iv = <span class="hljs-keyword">await</span> random(AES_IV_SIZE);
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> purePrivateEncrypt(iv, key, plaintext);
         };</pre></div></div>
             
         </li>
@@ -594,7 +603,7 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">const</span> privateDecrypt = <span class="hljs-keyword">async</span> (key: Hex, ciphertext: Hex): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">string</span>&gt; =&gt; {
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">const</span> purePrivateDecrypt = <span class="hljs-keyword">async</span> (key: Hex, ciphertext: Hex): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">string</span>&gt; =&gt; {
             <span class="hljs-keyword">const</span> length = ciphertext.length;
             <span class="hljs-keyword">const</span> iv = ciphertext.substring(<span class="hljs-number">0</span>, AES_IV_SIZE * <span class="hljs-number">2</span>);
             <span class="hljs-keyword">const</span> ciphertext_ = ciphertext.substring(AES_IV_SIZE * <span class="hljs-number">2</span>, length - (AUTH_TAG_SIZE_BYTES * <span class="hljs-number">2</span>));
@@ -618,7 +627,7 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>     
-        <span class="hljs-keyword">const</span> privateSign = <span class="hljs-keyword">async</span> (key: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
+        <span class="hljs-keyword">const</span> purePrivateSign = <span class="hljs-keyword">async</span> (key: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
             <span class="hljs-keyword">const</span> hmac = crypto.createHmac(HASH, Buffer.from(key, <span class="hljs-string">'hex'</span>));
             hmac.update(plaintext);
             <span class="hljs-keyword">return</span> hmac.digest(<span class="hljs-string">'hex'</span>);
@@ -638,7 +647,7 @@
             </div>
             
             <div class="content"><div class='highlight'><pre>        
-        <span class="hljs-keyword">const</span> privateVerify = <span class="hljs-keyword">async</span> (key: Hex, signature: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">boolean</span>&gt; =&gt; {
+        <span class="hljs-keyword">const</span> purePrivateVerify = <span class="hljs-keyword">async</span> (key: Hex, signature: Hex, plaintext: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">boolean</span>&gt; =&gt; {
             <span class="hljs-keyword">const</span> hmac = crypto.createHmac(HASH, Buffer.from(key, <span class="hljs-string">'hex'</span>));
             hmac.update(plaintext);
             <span class="hljs-keyword">return</span> hmac.digest(<span class="hljs-string">'hex'</span>)
@@ -701,11 +710,12 @@
         <span class="hljs-keyword">return</span> {
             <span class="hljs-keyword">private</span>: {
                 key: privateKey, 
-                kdf: privateKdf, 
+                kdf: purePrivateKdf,
+                _encrypt: purePrivateEncrypt, 
                 encrypt: privateEncrypt, 
-                decrypt: privateDecrypt, 
-                sign: privateSign, 
-                verify: privateVerify
+                decrypt: purePrivateDecrypt, 
+                sign: purePrivateSign, 
+                verify: purePrivateVerify
             },
             <span class="hljs-keyword">public</span>: {
                 key: NOT_IMPLEMENTED, 
@@ -809,12 +819,12 @@
     });
 
     <span class="hljs-keyword">if</span> (env === <span class="hljs-string">'browser'</span>) {
-        <span class="hljs-keyword">this</span>.jwcl = jwcl;
+        (&lt;<span class="hljs-built_in">any</span>&gt;<span class="hljs-keyword">this</span>).jwcl = jwcl;
     } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (env === <span class="hljs-string">'node'</span>) {
         exports.jwcl = jwcl;
     }
 
-}).call(<span class="hljs-keyword">this</span>);</pre></div></div>
+}).call(&lt;<span class="hljs-built_in">any</span>&gt;<span class="hljs-keyword">this</span>);</pre></div></div>
             
         </li>
         
