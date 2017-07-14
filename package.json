@@ -7,14 +7,14 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "qunit -c jwcl.js -t tests.js"
+    "test": "qunit -c jwcl.js -t unit-tests.js && node integration-tests.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jo-wil/jwcl.git"
   },
   "author": "Joey Wilson",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/jo-wil/jwcl/issues"
   },
@@ -22,6 +22,7 @@
   "devDependencies": {
     "@types/node": "^8.0.12",
     "@types/text-encoding": "0.0.31",
-    "qunit": "^1.0.0"
+    "qunit": "^1.0.0",
+    "typescript": "^2.4.1"
   }
 }

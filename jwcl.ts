@@ -104,7 +104,7 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
 
         // ## Kdf
 
-        const privateKdf = async (secret: string): Promise<Hex> => {
+        const purePrivateKdf = async (secret: string): Promise<Hex> => {
             const masterKey = await subtle.importKey('raw', stob(secret), { 
                 name: 'PBKDF2' 
             }, false, ['deriveKey']);
@@ -123,8 +123,7 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
 
         // ## Encrypt
 
-        const privateEncrypt = async (key: Hex, plaintext: string): Promise<Hex> => {
-            const iv = await random(AES_IV_SIZE);
+        const purePrivateEncrypt = async(iv: Hex, key: Hex, plaintext: string): Promise<Hex> => {
             const algorithm = {
                 name: AES,
                 iv: htob(iv)
@@ -132,11 +131,16 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
             const cryptoKey = await subtle.importKey('raw', htob(key), algorithm, false, ['encrypt']);
             const ciphertext = await subtle.encrypt(algorithm, cryptoKey, stob(plaintext));
             return iv + btoh(ciphertext);
+        };
+
+        const privateEncrypt = async (key: Hex, plaintext: string): Promise<Hex> => {
+            const iv = await random(AES_IV_SIZE);
+            return await purePrivateEncrypt(iv, key, plaintext);
         }; 
 
         // ## Decrypt
         
-        const privateDecrypt = async (key: Hex, ciphertext: Hex): Promise<string> => {
+        const purePrivateDecrypt = async (key: Hex, ciphertext: Hex): Promise<string> => {
             const binaryCiphertext = htob(ciphertext);
             const algorithm = {
                 name: AES,
@@ -149,7 +153,7 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
 
         // ## Sign
      
-        const privateSign = async (key: Hex, plaintext: string): Promise<Hex> => {
+        const purePrivateSign = async (key: Hex, plaintext: string): Promise<Hex> => {
             const algorithm = {
                 name: 'HMAC',
                 hash: HASH
@@ -161,7 +165,7 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
         
         // ## Verify
         
-        const privateVerify = async (key: Hex, signature: Hex, plaintext: string): Promise<boolean> => {
+        const purePrivateVerify = async (key: Hex, signature: Hex, plaintext: string): Promise<boolean> => {
             const algorithm = {
                 name: 'HMAC',
                 hash: HASH
@@ -197,11 +201,12 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
             },
             private: {
                 key: privateKey,
-                kdf: privateKdf, 
+                kdf: purePrivateKdf, 
+                _encrypt: purePrivateEncrypt,
                 encrypt: privateEncrypt,
-                decrypt: privateDecrypt,
-                sign: privateSign,
-                verify: privateVerify
+                decrypt: purePrivateDecrypt,
+                sign: purePrivateSign,
+                verify: purePrivateVerify
             },
             public: {
                 key: NOT_IMPLEMENTED, 
@@ -242,7 +247,7 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
 
         // ## Kdf
         
-        const privateKdf = async (secret: string): Promise<Hex> => {
+        const purePrivateKdf = async (secret: string): Promise<Hex> => {
             return new Promise<Hex>((resolve, reject) => {
                 crypto.pbkdf2(
                     secret, 
@@ -263,17 +268,21 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
 
         // ## Encrypt
 
-        const privateEncrypt = async (key: Hex, plaintext: string): Promise<Hex> => {
-            const iv = await random(AES_IV_SIZE);
+        const purePrivateEncrypt = async(iv: Hex, key: Hex, plaintext: string): Promise<Hex> => {
             const cipher = crypto.createCipheriv(AES, Buffer.from(key, 'hex'), Buffer.from(iv, 'hex'));
             const ciphertext = iv + cipher.update(plaintext, 'utf8', 'hex') + cipher.final('hex');
             return ciphertext + cipher.getAuthTag().toString('hex');
         };
 
+        const privateEncrypt = async (key: Hex, plaintext: string): Promise<Hex> => {
+            const iv = await random(AES_IV_SIZE);
+            return await purePrivateEncrypt(iv, key, plaintext);
+        };
+
         // ## Decrypt
         
         // times 2 for hex
-        const privateDecrypt = async (key: Hex, ciphertext: Hex): Promise<string> => {
+        const purePrivateDecrypt = async (key: Hex, ciphertext: Hex): Promise<string> => {
             const length = ciphertext.length;
             const iv = ciphertext.substring(0, AES_IV_SIZE * 2);
             const ciphertext_ = ciphertext.substring(AES_IV_SIZE * 2, length - (AUTH_TAG_SIZE_BYTES * 2));
@@ -285,7 +294,7 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
 
         // ## Sign
      
-        const privateSign = async (key: Hex, plaintext: string): Promise<Hex> => {
+        const purePrivateSign = async (key: Hex, plaintext: string): Promise<Hex> => {
             const hmac = crypto.createHmac(HASH, Buffer.from(key, 'hex'));
             hmac.update(plaintext);
             return hmac.digest('hex');
@@ -293,7 +302,7 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
         
         // ## Verify
         
-        const privateVerify = async (key: Hex, signature: Hex, plaintext: string): Promise<boolean> => {
+        const purePrivateVerify = async (key: Hex, signature: Hex, plaintext: string): Promise<boolean> => {
             const hmac = crypto.createHmac(HASH, Buffer.from(key, 'hex'));
             hmac.update(plaintext);
             return hmac.digest('hex')
@@ -330,11 +339,12 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
         return {
             private: {
                 key: privateKey, 
-                kdf: privateKdf, 
+                kdf: purePrivateKdf,
+                _encrypt: purePrivateEncrypt, 
                 encrypt: privateEncrypt, 
-                decrypt: privateDecrypt, 
-                sign: privateSign, 
-                verify: privateVerify
+                decrypt: purePrivateDecrypt, 
+                sign: purePrivateSign, 
+                verify: purePrivateVerify
             },
             public: {
                 key: NOT_IMPLEMENTED, 
@@ -388,9 +398,9 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
     });
 
     if (env === 'browser') {
-        this.jwcl = jwcl;
+        (<any>this).jwcl = jwcl;
     } else if (env === 'node') {
         exports.jwcl = jwcl;
     }
 
-}).call(this);
+}).call(<any>this);

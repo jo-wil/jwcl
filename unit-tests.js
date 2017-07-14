@@ -1,5 +1,3 @@
-// JWCL
-
 var env = (function () {
     return (typeof module !== 'undefined' && module.exports) ? 'node' : 'browser';
 })();
