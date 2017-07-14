@@ -33,7 +33,8 @@
             <div class="content"><div class='highlight'><pre><span class="hljs-keyword">type</span> Hex = <span class="hljs-built_in">string</span>;
 <span class="hljs-keyword">type</span> Op = <span class="hljs-string">'encrypt'</span> | <span class="hljs-string">'decrypt'</span> | <span class="hljs-string">'sign'</span> | <span class="hljs-string">'verify'</span>;
 
-<span class="hljs-keyword">const</span> jwcl = <span class="hljs-function">(<span class="hljs-params">(<span class="hljs-params"></span>) =&gt; {
+<span class="hljs-function">(<span class="hljs-params">(<span class="hljs-params"></span>) =&gt; {
+
 
 </span></span></pre></div></div>
             
@@ -406,82 +407,6 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
-              <h2 id="encrypt">Encrypt</h2>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>        
-        <span class="hljs-keyword">const</span> encrypt = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, message: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
-            <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> privateKdf(secret);
-            <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> privateEncrypt(key, message);
-        };</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-18">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
-              </div>
-              <h2 id="decrypt">Decrypt</h2>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>
-        <span class="hljs-keyword">const</span> decrypt = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, encryptedMessage: Hex): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">string</span>&gt; =&gt; {
-            <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> privateKdf(secret);
-            <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> privateDecrypt(key, encryptedMessage);
-        };</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-19">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
-              </div>
-              <h2 id="sign">Sign</h2>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>        
-        <span class="hljs-keyword">const</span> sign = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, message: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
-            <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> privateKdf(secret);
-            <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> privateSign(key, message);
-        };</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-20">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
-              </div>
-              <h2 id="verify">Verify</h2>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>        
-        <span class="hljs-keyword">const</span> verify = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, signature: Hex, message: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">boolean</span>&gt; =&gt; {
-            <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> privateKdf(secret);
-            <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> privateVerify(key, signature, message);
-        };</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-21">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
-              </div>
               <h2 id="export">Export</h2>
 
             </div>
@@ -511,22 +436,18 @@
                 verify: NOT_IMPLEMENTED
             },
             random: random,
-            hash: hash,
-            encrypt: encrypt,
-            decrypt: decrypt,
-            sign: sign,
-            verify: verify
+            hash: hash
         };
     };</pre></div></div>
             
         </li>
         
         
-        <li id="section-22">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <h1 id="node">Node</h1>
 
@@ -540,11 +461,11 @@
         </li>
         
         
-        <li id="section-23">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <h2 id="crypto-defaults">Crypto Defaults</h2>
 
@@ -557,11 +478,11 @@
         </li>
         
         
-        <li id="section-24">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <h2 id="private-key">Private Key</h2>
 
@@ -570,11 +491,11 @@
         </li>
         
         
-        <li id="section-25">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <h2 id="key">Key</h2>
 
@@ -594,11 +515,11 @@
         </li>
         
         
-        <li id="section-26">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <h2 id="kdf">Kdf</h2>
 
@@ -629,11 +550,11 @@
         </li>
         
         
-        <li id="section-27">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <h2 id="encrypt">Encrypt</h2>
 
@@ -650,11 +571,11 @@
         </li>
         
         
-        <li id="section-28">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <h2 id="decrypt">Decrypt</h2>
 
@@ -663,11 +584,11 @@
         </li>
         
         
-        <li id="section-29">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <p>times 2 for hex</p>
 
@@ -686,11 +607,11 @@
         </li>
         
         
-        <li id="section-30">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-30">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <h2 id="sign">Sign</h2>
 
@@ -706,11 +627,11 @@
         </li>
         
         
-        <li id="section-31">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-31">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <h2 id="verify">Verify</h2>
 
@@ -731,11 +652,11 @@
         </li>
         
         
-        <li id="section-32">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-32">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <h2 id="random">Random</h2>
 
@@ -759,11 +680,11 @@
         </li>
         
         
-        <li id="section-33">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-33">&#182;</a>
+                <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
               <h2 id="hash">Hash</h2>
 
@@ -774,84 +695,9 @@
             <span class="hljs-keyword">const</span> hash = crypto.createHash(algorithm);
             hash.update(plaintext);
             <span class="hljs-keyword">return</span> hash.digest(<span class="hljs-string">'hex'</span>);
-        };</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-34">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
-              </div>
-              <h2 id="encrypt">Encrypt</h2>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>        
-        <span class="hljs-keyword">const</span> encrypt = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, message: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
-            <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> privateKdf(secret);
-            <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> privateEncrypt(key, message);
-        };</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-35">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-35">&#182;</a>
-              </div>
-              <h2 id="decrypt">Decrypt</h2>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>
-        <span class="hljs-keyword">const</span> decrypt = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, encryptedMessage: Hex): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">string</span>&gt; =&gt; {
-            <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> privateKdf(secret);
-            <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> privateDecrypt(key, encryptedMessage);
-        };</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-36">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-36">&#182;</a>
-              </div>
-              <h2 id="sign">Sign</h2>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>        
-        <span class="hljs-keyword">const</span> sign = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, message: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
-            <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> privateKdf(secret);
-            <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> privateSign(key, message);
-        };</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-37">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-37">&#182;</a>
-              </div>
-              <h2 id="verify">Verify</h2>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>        
-        <span class="hljs-keyword">const</span> verify = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, signature: Hex, message: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">boolean</span>&gt; =&gt; {
-            <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> privateKdf(secret);
-            <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> privateVerify(key, signature, message);
         };
 
+        
         <span class="hljs-keyword">return</span> {
             <span class="hljs-keyword">private</span>: {
                 key: privateKey, 
@@ -869,21 +715,106 @@
                 verify: NOT_IMPLEMENTED
             },
             random: random, 
-            hash: hash,
-            encrypt: encrypt,
-            decrypt: decrypt,
-            sign: sign,
-            verify: verify
+            hash: hash
         };
     };
 
-    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> <span class="hljs-keyword">module</span> !== 'undefined' &amp;&amp; <span class="hljs-keyword">module</span>.exports) {
-        exports.jwcl = node();
-    } <span class="hljs-keyword">else</span> {
-        <span class="hljs-keyword">return</span> browser();
+    <span class="hljs-keyword">const</span> env = <span class="hljs-function">(<span class="hljs-params">(<span class="hljs-params"></span>) =&gt; (<span class="hljs-params"><span class="hljs-keyword">typeof</span> <span class="hljs-built_in">module</span> !== '<span class="hljs-literal">undefined</span>' &amp;&amp; <span class="hljs-built_in">module</span>.exports</span>) ? 'node' : 'browser'</span>)<span class="hljs-params">()</span>;
+    
+    <span class="hljs-params">const</span> _<span class="hljs-params">jwcl</span> = <span class="hljs-params">env</span> === '<span class="hljs-params">browser</span>' ? <span class="hljs-params">browser</span><span class="hljs-params">()</span> : <span class="hljs-params">node</span><span class="hljs-params">()</span>;
+
+</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-30">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <h2 id="encrypt">Encrypt</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        
+    <span class="hljs-keyword">const</span> encrypt = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, message: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
+        <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> _jwcl.private.kdf(secret);
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> _jwcl.private.encrypt(key, message);
+    };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-31">&#182;</a>
+              </div>
+              <h2 id="decrypt">Decrypt</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
+    <span class="hljs-keyword">const</span> decrypt = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, encryptedMessage: Hex): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">string</span>&gt; =&gt; {
+        <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> _jwcl.private.kdf(secret);
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> _jwcl.private.decrypt(key, encryptedMessage);
+    };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-32">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-32">&#182;</a>
+              </div>
+              <h2 id="sign">Sign</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    
+    <span class="hljs-keyword">const</span> sign = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, message: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;Hex&gt; =&gt; {
+        <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> _jwcl.private.kdf(secret);
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> _jwcl.private.sign(key, message);
+    };</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-33">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <h2 id="verify">Verify</h2>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    
+    <span class="hljs-keyword">const</span> verify = <span class="hljs-keyword">async</span> (secret: <span class="hljs-built_in">string</span>, signature: Hex, message: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">Promise</span>&lt;<span class="hljs-built_in">boolean</span>&gt; =&gt; {
+        <span class="hljs-keyword">const</span> key = <span class="hljs-keyword">await</span> _jwcl.private.kdf(secret);
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">await</span> _jwcl.private.verify(key, signature, message);
+    };
+
+    <span class="hljs-keyword">const</span> jwcl = <span class="hljs-built_in">Object</span>.assign({}, _jwcl, {
+        encrypt: encrypt,
+        decrypt: decrypt,
+        sign: sign,
+        verify: verify        
+    });
+
+    <span class="hljs-keyword">if</span> (env === <span class="hljs-string">'browser'</span>) {
+        <span class="hljs-keyword">this</span>.jwcl = jwcl;
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (env === <span class="hljs-string">'node'</span>) {
+        exports.jwcl = jwcl;
     }
 
-})();</pre></div></div>
+}).call(<span class="hljs-keyword">this</span>);</pre></div></div>
             
         </li>
         
