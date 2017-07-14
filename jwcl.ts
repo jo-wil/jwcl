@@ -398,9 +398,9 @@ type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
     });
 
     if (env === 'browser') {
-        (<any>this).jwcl = jwcl;
+        this.jwcl = jwcl;
     } else if (env === 'node') {
         exports.jwcl = jwcl;
     }
 
-}).call(<any>this);
+}).call(this);
