@@ -1,406 +1,311 @@
+// # JWCL
+
+// ### Types
+
 type Hex = string;
 type Op = 'encrypt' | 'decrypt' | 'sign' | 'verify';
 
-(() => {
+(function () {
 
+    // ## Constants
 
-    // ## Crypto Constants
+    // Sizes
 
-    const AES_BLOCK_SIZE_BYTES = 16;
-    const AES_IV_SIZE = AES_BLOCK_SIZE_BYTES;
-    const AUTH_TAG_SIZE_BYTES = 16;
-    const BITS_IN_BYTE = 8;    
+    const BITS_IN_BYTE: number = 8;    
+    const PRIVATE_KEY_LENGTH_BITS: number = 128;
+    const PRIVATE_KEY_LENGTH_BYTES: number = PRIVATE_KEY_LENGTH_BITS/BITS_IN_BYTE;
 
-    // ## Crypto Defaults
-    
-    const PRIVATE_KEY_LENGTH_BITS = 128;
-    const PRIVATE_KEY_LENGTH_BYTES = PRIVATE_KEY_LENGTH_BITS/BITS_IN_BYTE;
-    const PBKDF2_ITERATIONS = 10000;
-   
-    // TODO remove  
-    const NOT_IMPLEMENTED = () => {
-        throw {
-            name: 'JWCL',
-            message: 'not implemented'
-        };
-    };
-    
-    // # Browser
+    // Algorithms
 
-    const browser = () => {
-            
-        const crypto = window.crypto;
-        const subtle = window.crypto.subtle;    
+    const BROWSER_AES_ALGO: string = 'AES-GCM';
+    const BROWSER_SHA_ALGO: string = 'SHA-256';
+    const BROWSER_HMAC_ALGO: string = 'HMAC';
+    const BROWSER_RSA_ALGO: string = 'RSA-OAEP';
+    const BROWSER_DSA_ALGO: string = 'ECDSA';
 
-        const hexReg = /[a-f0-9][a-f0-9]/g;
-        const encoder = new TextEncoder('utf-8');
-        const decoder = new TextDecoder('utf-8');
+    // Configurations
 
-        // ## Internal
+    const PBKDF2_ITERATIONS: number = 10000; 
+    const AES_GCM_IV_LENGTH_BYTES: number = 96/BITS_IN_BYTE;
+    const AES_GCM_AUTH_TAG_LENGTH_BYTES: number = 16;
 
-        const stob = (string: string): Uint8Array => {
-            return encoder.encode(string);
-        };
+    // # Internal
 
-        const btos = (binary: ArrayBuffer | ArrayBufferView): string => {
-            const binaryArray = (binary instanceof ArrayBuffer) ? new Uint8Array(binary) : binary;
-            return decoder.decode(binaryArray);
-        };
-     
-        const byteToHex = (_byte: number): string => {
-            const hex = _byte.toString(16);
-            return (hex.length === 1 ? '0' : '') + hex;
-        };
-     
-        const btoh = (binary: ArrayBuffer | Uint8Array): Hex => {
-            const binaryArray = (binary instanceof ArrayBuffer) ? new Uint8Array(binary) : binary;
-            return binaryArray.reduce( (acc, val) => acc + byteToHex(val), '');
-        };
-     
-        const htob = (hex: Hex): Uint8Array => {
-            const hexArray = hex.match(hexReg);
-            if (!hexArray) {
-                throw {
-                    name: 'JWCL',
-                    message: 'jwcl._internal.htob input is not hex'
-                };
-            }
-            return Uint8Array.from(hexArray.map(val => Number.parseInt(val, 16)));
-        };
-        
-        // ## Crypto Defaults
+    const crypto = window.crypto;
+    const subtle = window.crypto.subtle;
+    const hexReg = /[a-f0-9][a-f0-9]/g;
+    const encoder = new TextEncoder('utf-8');
+    const decoder = new TextDecoder('utf-8');
 
-        const HASH = 'SHA-256';
-        const AES = 'AES-GCM';
-        
-        // ## Private Key
+    // ## Internal
 
-        // ## Key
+    function stob(string_: string): Uint8Array {
+        return encoder.encode(string_);
+    }
 
-        const privateKey = async (op?: Op): Promise<Hex> => {
-            if (!op) {
-                return random(PRIVATE_KEY_LENGTH_BYTES);
-            } 
-            let cryptoKey;
-            if (op === 'encrypt' || op === 'decrypt') {
-                cryptoKey = await subtle.generateKey({
-                    name: AES,
-                    length: PRIVATE_KEY_LENGTH_BITS
-                }, true, ['encrypt', 'decrypt']);
-            } else if (op === 'sign' || op === 'verify') {
-                cryptoKey = await subtle.generateKey({
-                    name: 'HMAC',
-                    hash: HASH
-                }, true, ['sign','verify']);
-            } else {
-                throw {
-                    name: 'JWCL',
-                    message: `jwcl.private.key ${op} is not a supported operation`
-                };
-            }
-            const key = await subtle.exportKey('raw', cryptoKey);
-            return btoh(key);
-        };
-
-        // ## Kdf
-
-        const purePrivateKdf = async (secret: string): Promise<Hex> => {
-            const masterKey = await subtle.importKey('raw', stob(secret), { 
-                name: 'PBKDF2' 
-            }, false, ['deriveKey']);
-            const derivedKey = await subtle.deriveKey({ 
-                'name': 'PBKDF2',
-                'salt': new Uint8Array([0,0,0,0,0,0,0,0]), // TODO research this
-                'iterations': PBKDF2_ITERATIONS,
-                'hash': HASH
-            }, masterKey, { 
-                'name': AES, 
-                'length': PRIVATE_KEY_LENGTH_BITS 
-            }, true, [ 'encrypt', 'decrypt' ]);
-            const key = await subtle.exportKey('raw', derivedKey);
-            return btoh(key);
-        };
-
-        // ## Encrypt
-
-        const purePrivateEncrypt = async(iv: Hex, key: Hex, plaintext: string): Promise<Hex> => {
-            const algorithm = {
-                name: AES,
-                iv: htob(iv)
-            };
-            const cryptoKey = await subtle.importKey('raw', htob(key), algorithm, false, ['encrypt']);
-            const ciphertext = await subtle.encrypt(algorithm, cryptoKey, stob(plaintext));
-            return iv + btoh(ciphertext);
-        };
-
-        const privateEncrypt = async (key: Hex, plaintext: string): Promise<Hex> => {
-            const iv = await random(AES_IV_SIZE);
-            return await purePrivateEncrypt(iv, key, plaintext);
-        }; 
-
-        // ## Decrypt
-        
-        const purePrivateDecrypt = async (key: Hex, ciphertext: Hex): Promise<string> => {
-            const binaryCiphertext = htob(ciphertext);
-            const algorithm = {
-                name: AES,
-                iv: binaryCiphertext.subarray(0, AES_IV_SIZE)
-            };
-            const cryptoKey = await subtle.importKey('raw', htob(key), algorithm, false, ['decrypt']);
-            const plaintext = await subtle.decrypt(algorithm, cryptoKey, binaryCiphertext.subarray(AES_IV_SIZE));
-            return btos(plaintext);
-        }; 
-
-        // ## Sign
-     
-        const purePrivateSign = async (key: Hex, plaintext: string): Promise<Hex> => {
-            const algorithm = {
-                name: 'HMAC',
-                hash: HASH
-            };
-            const cryptoKey = await subtle.importKey('raw', htob(key), algorithm, false, ['sign']);
-            const signature = await subtle.sign(algorithm.name, cryptoKey, stob(plaintext));
-            return btoh(signature);
-        };
-        
-        // ## Verify
-        
-        const purePrivateVerify = async (key: Hex, signature: Hex, plaintext: string): Promise<boolean> => {
-            const algorithm = {
-                name: 'HMAC',
-                hash: HASH
-            };
-            const cryptoKey = await subtle.importKey('raw', htob(key), algorithm, false, ['verify']);
-            return subtle.verify(algorithm.name, cryptoKey, htob(signature), stob(plaintext));
-        };
-
-        // ## Random
-
-        const random = async (bytes: number): Promise<Hex> => {
-            const output = new Uint8Array(bytes);
-            crypto.getRandomValues(output);
-            return btoh(output);
-        };
-
-        // ## Hash
-
-        const hash = async (plaintext: string, algorithm: string = HASH): Promise<Hex> => {
-            const hash = await subtle.digest(algorithm, stob(plaintext));
-            return btoh(hash);    
-        };
-
-        // ## Export
-
-        return {
-            _internal: {
-                stob: stob,
-                btos: btos,
-                byteToHex: byteToHex,
-                btoh: btoh,
-                htob: htob
-            },
-            private: {
-                key: privateKey,
-                kdf: purePrivateKdf, 
-                _encrypt: purePrivateEncrypt,
-                encrypt: privateEncrypt,
-                decrypt: purePrivateDecrypt,
-                sign: purePrivateSign,
-                verify: purePrivateVerify
-            },
-            public: {
-                key: NOT_IMPLEMENTED, 
-                encrypt: NOT_IMPLEMENTED,
-                decrypt: NOT_IMPLEMENTED,
-                sign: NOT_IMPLEMENTED,
-                verify: NOT_IMPLEMENTED
-            },
-            random: random,
-            hash: hash
-        };
-    };
-
-    // # Node
-
-    const node = () => {
-
-        const crypto = require('crypto');
-        
-        // ## Crypto Defaults
-
-        const HASH = 'sha256';
-        const AES = 'id-aes128-GCM';
-
-        // ## Private Key
-
-        // ## Key
-
-        const privateKey = async (op?: Op): Promise<Hex> => {
-            if (op && !(['encrypt', 'decrypt', 'sign', 'verify'].includes(op))) {
-                throw {
-                    name: 'JWCL',
-                    message: `jwcl.private.key ${op} is not a supported operation`
-                };
-            }
-            return random(PRIVATE_KEY_LENGTH_BYTES);
-        };
-
-        // ## Kdf
-        
-        const purePrivateKdf = async (secret: string): Promise<Hex> => {
-            return new Promise<Hex>((resolve, reject) => {
-                crypto.pbkdf2(
-                    secret, 
-                    Buffer.from([0,0,0,0,0,0,0,0]).toString('utf8'), 
-                    PBKDF2_ITERATIONS, 
-                    PRIVATE_KEY_LENGTH_BYTES, 
-                    HASH, 
-                    (err: Error, buffer: Buffer) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(buffer.toString('hex'));
-                        }
-                    }
-                );
-            });
-        };
-
-        // ## Encrypt
-
-        const purePrivateEncrypt = async(iv: Hex, key: Hex, plaintext: string): Promise<Hex> => {
-            const cipher = crypto.createCipheriv(AES, Buffer.from(key, 'hex'), Buffer.from(iv, 'hex'));
-            const ciphertext = iv + cipher.update(plaintext, 'utf8', 'hex') + cipher.final('hex');
-            return ciphertext + cipher.getAuthTag().toString('hex');
-        };
-
-        const privateEncrypt = async (key: Hex, plaintext: string): Promise<Hex> => {
-            const iv = await random(AES_IV_SIZE);
-            return await purePrivateEncrypt(iv, key, plaintext);
-        };
-
-        // ## Decrypt
-        
-        // times 2 for hex
-        const purePrivateDecrypt = async (key: Hex, ciphertext: Hex): Promise<string> => {
-            const length = ciphertext.length;
-            const iv = ciphertext.substring(0, AES_IV_SIZE * 2);
-            const ciphertext_ = ciphertext.substring(AES_IV_SIZE * 2, length - (AUTH_TAG_SIZE_BYTES * 2));
-            const authTag = ciphertext.substring(length - (AUTH_TAG_SIZE_BYTES * 2), length);
-            const decipher = crypto.createDecipheriv(AES, Buffer.from(key, 'hex'), Buffer.from(iv, 'hex'));
-            decipher.setAuthTag(Buffer.from(authTag, 'hex'));
-            return decipher.update(ciphertext_, 'hex', 'utf8') + decipher.final('utf8');
-        };
-
-        // ## Sign
-     
-        const purePrivateSign = async (key: Hex, plaintext: string): Promise<Hex> => {
-            const hmac = crypto.createHmac(HASH, Buffer.from(key, 'hex'));
-            hmac.update(plaintext);
-            return hmac.digest('hex');
-        };
-        
-        // ## Verify
-        
-        const purePrivateVerify = async (key: Hex, signature: Hex, plaintext: string): Promise<boolean> => {
-            const hmac = crypto.createHmac(HASH, Buffer.from(key, 'hex'));
-            hmac.update(plaintext);
-            return hmac.digest('hex')
-                .split('')
-                .map((c: string, i: number) => c === signature[i])
-                .reduce((x: boolean, y: boolean) => {
-                    return x && y;
-                }, true);
-        };
-
-        // ## Random
-
-        const random = (bytes: number): Promise<Hex> => {
-            return new Promise<Hex>((resolve, reject) => {
-                crypto.randomBytes(bytes, (err: Error, buffer: Buffer) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(buffer.toString('hex'));
-                    }
-                });
-            });
-        };
+    function btos(binary: ArrayBuffer | ArrayBufferView): string {
+        const binaryArray = (binary instanceof ArrayBuffer) ? new Uint8Array(binary) : binary;
+        return decoder.decode(binaryArray);
+    }
  
-        // ## Hash
-
-        const hash = async (plaintext: string, algorithm: string = HASH): Promise<Hex> => {
-            const hash = crypto.createHash(algorithm);
-            hash.update(plaintext);
-            return hash.digest('hex');
-        };
-
-        
-        return {
-            private: {
-                key: privateKey, 
-                kdf: purePrivateKdf,
-                _encrypt: purePrivateEncrypt, 
-                encrypt: privateEncrypt, 
-                decrypt: purePrivateDecrypt, 
-                sign: purePrivateSign, 
-                verify: purePrivateVerify
-            },
-            public: {
-                key: NOT_IMPLEMENTED, 
-                encrypt: NOT_IMPLEMENTED,
-                decrypt: NOT_IMPLEMENTED,
-                sign: NOT_IMPLEMENTED,
-                verify: NOT_IMPLEMENTED
-            },
-            random: random, 
-            hash: hash
-        };
-    };
-
-    const env = (() => (typeof module !== 'undefined' && module.exports) ? 'node' : 'browser')();
+    function byteToHex(byte_: number): string {
+        const hex = byte_.toString(16);
+        return (hex.length === 1 ? '0' : '') + hex;
+    }
     
-    const _jwcl = env === 'browser' ? browser() : node();
+    function btoh(binary: ArrayBuffer | Uint8Array): Hex {
+        const binaryArray = (binary instanceof ArrayBuffer) ? new Uint8Array(binary) : binary;
+        return binaryArray.reduce( (acc, val) => acc + byteToHex(val), '');
+    }
+ 
+    function htob(hex: Hex): Uint8Array {
+        const hexArray = hex.match(hexReg);
+        if (!hexArray) {
+            throw {
+                name: 'JWCL',
+                message: 'jwcl._internal.htob input is not hex'
+            };
+        }
+        return Uint8Array.from(hexArray.map(val => Number.parseInt(val, 16)));
+    }
+
+    // ## Random
+
+    async function browserRandom(bytes: number): Promise<Hex> {
+        const output = new Uint8Array(bytes);
+        crypto.getRandomValues(output);
+        return btoh(output);
+    }
+
+    // ## Hash
+    
+    async function browserHash(plaintext: string, algorithm: string = BROWSER_SHA_ALGO): Promise<Hex> {
+        const hash = await crypto.subtle.digest(algorithm, stob(plaintext));
+        return btoh(hash);    
+    }
+    
+    // # Private
+
+    // ## Key
+
+    async function browserPrivateKey(op?: Op): Promise<Hex> {
+        if (!op) {
+            return browserRandom(PRIVATE_KEY_LENGTH_BYTES);
+        }
+        // TODO const 
+        let key;
+        if (op === 'encrypt' || op === 'decrypt') {
+            key = await crypto.subtle.generateKey({
+                name: BROWSER_AES_ALGO,
+                length: PRIVATE_KEY_LENGTH_BITS
+            }, true, ['encrypt', 'decrypt']);
+        } else if (op === 'sign' || op === 'verify') {
+            key = await crypto.subtle.generateKey({
+                name: BROWSER_HMAC_ALGO,
+                hash: BROWSER_SHA_ALGO
+            }, true, ['sign','verify']);
+        } else {
+            throw {
+                name: 'JWCL',
+                message: `jwcl.private.key ${op} is not a supported operation`
+            };
+        }
+        const key_ = await crypto.subtle.exportKey('raw', key);
+        return btoh(key_);
+    }
+
+    // ## KDF
+
+    async function browserPrivateKdf(secret: string): Promise<Hex> {
+        const masterKey = await crypto.subtle.importKey('raw', stob(secret), { 
+            name: 'PBKDF2' 
+        }, false, ['deriveKey']);
+        const derivedKey = await crypto.subtle.deriveKey({ 
+            'name': 'PBKDF2',
+            'salt': new Uint8Array([0,0,0,0,0,0,0,0]), // TODO research this
+            'iterations': PBKDF2_ITERATIONS,
+            'hash': BROWSER_SHA_ALGO
+        }, masterKey, { 
+            'name': BROWSER_AES_ALGO, 
+            'length': PRIVATE_KEY_LENGTH_BITS 
+        }, true, [ 'encrypt', 'decrypt' ]);
+        const key = await crypto.subtle.exportKey('raw', derivedKey);
+        return btoh(key);
+    }
 
     // ## Encrypt
-        
-    const encrypt = async (secret: string, message: string): Promise<Hex> => {
-        const key = await _jwcl.private.kdf(secret);
-        return await _jwcl.private.encrypt(key, message);
-    };
-    
-    // ## Decrypt
 
-    const decrypt = async (secret: string, encryptedMessage: Hex): Promise<string> => {
-        const key = await _jwcl.private.kdf(secret);
-        return await _jwcl.private.decrypt(key, encryptedMessage);
-    };
+    async function browserPrivateEncrypt(key: Hex, iv: Hex, plaintext: string): Promise<Hex> {
+        const algorithm = {
+            name: BROWSER_AES_ALGO,
+            iv: htob(iv)
+        };
+        const cryptoKey = await crypto.subtle.importKey('raw', htob(key), algorithm, false, ['encrypt']);
+        const ciphertext = await crypto.subtle.encrypt(algorithm, cryptoKey, stob(plaintext));
+        return iv + btoh(ciphertext);  
+    }
+
+    // ## Decrypt 
+
+    async function browserPrivateDecrypt(key: Hex, ciphertext: string): Promise<Hex> {
+        const binaryCiphertext = htob(ciphertext);
+        const algorithm = {
+            name: BROWSER_AES_ALGO,
+            iv: binaryCiphertext.subarray(0, AES_GCM_IV_LENGTH_BYTES)
+        };
+        const cryptoKey = await crypto.subtle.importKey('raw', htob(key), algorithm, false, ['decrypt']);
+        const plaintext = await crypto.subtle.decrypt(algorithm, cryptoKey, binaryCiphertext.subarray(AES_GCM_IV_LENGTH_BYTES));
+        return btos(plaintext);
+    }
+
+    // ## Sign
+
+    async function browserPrivateSign(key: Hex, plaintext: string): Promise<Hex> {
+        const algorithm = {
+            name: BROWSER_HMAC_ALGO,
+            hash: BROWSER_SHA_ALGO
+        };
+        const cryptoKey = await crypto.subtle.importKey('raw', htob(key), algorithm, false, ['sign']);
+        const signature = await crypto.subtle.sign(algorithm.name, cryptoKey, stob(plaintext));
+        return btoh(signature);
+    }
+
+    // ## Verify
+
+    async function browserPrivateVerify(key: Hex, signature: Hex, plaintext: string): Promise<boolean> {
+        const algorithm = {
+            name: BROWSER_HMAC_ALGO,
+            hash: BROWSER_SHA_ALGO
+        };
+        const key_ = await crypto.subtle.importKey('raw', htob(key), algorithm, false, ['verify']);
+        return crypto.subtle.verify(algorithm.name, key_, htob(signature), stob(plaintext));
+    }
+
+    // # Public TODO type all of the any's
+
+    // ## Key
+    
+    async function browserPublicKey(op: Op): Promise<any> {
+        let key;
+        if (op === 'encrypt' || op === 'decrypt') {
+            key = await crypto.subtle.generateKey({
+                name: BROWSER_RSA_ALGO,
+                modulusLength: 2048,
+                publicExponent: new Uint8Array([1, 0, 1]),
+                hash: {name: BROWSER_SHA_ALGO},
+            }, true, ['encrypt', 'decrypt']);
+        } else if (op === 'sign' || op === 'verify') {
+            key = await crypto.subtle.generateKey({
+                name: BROWSER_DSA_ALGO,
+                namedCurve: 'P-256',
+            }, true, ['sign', 'verify']);
+        } else {
+            throw {
+                name: 'JWCL',
+                message: `jwcl.public.key ${op} is not a supported operation`
+            };
+        }
+        return key;
+    } 
+ 
+    // ## Encrypt
+
+    async function browserPublicEncrypt(key: any, plaintext: string): Promise<Hex> {
+        const ciphertext = await crypto.subtle.encrypt({name: BROWSER_RSA_ALGO}, key.publicKey, stob(plaintext));
+        return btoh(ciphertext);
+    }
+
+    // ## Decrypt
+    
+    async function browserPublicDecrypt(key: any, ciphertext: Hex): Promise<string> {
+        const plaintext = await crypto.subtle.decrypt({name: BROWSER_RSA_ALGO}, key.privateKey, htob(ciphertext));
+        return btos(plaintext);
+    }
     
     // ## Sign
-    
-    const sign = async (secret: string, message: string): Promise<Hex> => {
-        const key = await _jwcl.private.kdf(secret);
-        return await _jwcl.private.sign(key, message);
-    };
-    
+
+    async function browserPublicSign(key: any, plaintext: string): Promise<Hex> {
+        const algorithm = {
+            name: BROWSER_DSA_ALGO,
+            hash: {name: BROWSER_SHA_ALGO}
+        };
+        const signature = await crypto.subtle.sign(algorithm, key.privateKey, stob(plaintext));
+        return btoh(signature); 
+    } 
+
     // ## Verify
-    
-    const verify = async (secret: string, signature: Hex, message: string): Promise<boolean> => {
-        const key = await _jwcl.private.kdf(secret);
-        return await _jwcl.private.verify(key, signature, message);
+   
+    async function browserPublicVerify(key: any, signature: Hex, plaintext: string): Promise<boolean> {
+        const algorithm = {
+            name: BROWSER_DSA_ALGO,
+            hash: {name: BROWSER_SHA_ALGO}
+        };
+        return await crypto.subtle.verify(algorithm, key.publicKey, htob(signature), stob(plaintext));
+    }
+
+    // # Export
+
+    const random = browserRandom;
+    const hash = browserHash;
+
+    const private_ = {
+        key: browserPrivateKey, 
+        kdf: browserPrivateKdf, 
+        encrypt: browserPrivateEncrypt,
+        decrypt: browserPrivateDecrypt,
+        sign: browserPrivateSign,
+        verify: browserPrivateVerify
     };
 
-    const jwcl = Object.assign({}, _jwcl, {
+    async function encrypt(secret: string, message: string): Promise<Hex> {
+        const key = await private_.kdf(secret);
+        const iv = await random(AES_GCM_IV_LENGTH_BYTES); 
+        return await private_.encrypt(key, iv, message);
+    }
+    
+    async function decrypt(secret: string, encryptedMessage: Hex): Promise<string> {
+        const key = await private_.kdf(secret);
+        return await private_.decrypt(key, encryptedMessage);
+    }
+    
+    async function sign(secret: string, message: string): Promise<Hex> {
+        const key = await private_.kdf(secret);
+        return await private_.sign(key, message);
+    }
+    
+    async function verify(secret: string, signature: Hex, message: string): Promise<boolean> {
+        const key = await private_.kdf(secret);
+        return await private_.verify(key, signature, message);
+    }
+
+    const public_ = {
+        key: browserPublicKey,
+        encrypt: browserPublicEncrypt,
+        decrypt: browserPublicDecrypt,
+        sign: browserPublicSign,
+        verify: browserPublicVerify
+    };
+
+    const _internal = {
+        stob: stob,
+        btos: btos,
+        byteToHex: byteToHex,
+        btoh: btoh,
+        htob: htob
+    };
+
+    const jwcl = {
+        random: random,
+        hash: hash,
+        private: private_,
+        public: public_,
         encrypt: encrypt,
         decrypt: decrypt,
         sign: sign,
-        verify: verify        
-    });
+        verify: verify,
+        _internal: _internal
+    };
 
-    if (env === 'browser') {
-        this.jwcl = jwcl;
-    } else if (env === 'node') {
-        exports.jwcl = jwcl;
-    }
-
+    this.jwcl = jwcl;
+ 
 }).call(this);

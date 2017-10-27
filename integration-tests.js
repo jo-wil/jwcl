@@ -7,16 +7,16 @@ var env = (function () {
 var tests = function () {
     console.log('----- INTEGRATION TESTS -----');
     var password = '1234';
-    var iv = '00000000000000000000000000000000';
+    var iv = '000000000000000000000000';
     var key = '00000000000000000000000000000000';
     var plaintext = 'a secret message';
-    var ciphertext = '00000000000000000000000000000000c29258e12addcac8f6adfa5f89fc85db6378c4239b281efc9de8b4f70b8cca1c';
+    var ciphertext = '00000000000000000000000062a8a9ab03c4c6e6d345a7ca02d3991d10aea34d0e90b0572f0a7a86ccef9060';
     var message = 'an important message';
     var signature = 'ce2c274ecfde0e1b0875b6e8a739af3a05816022177c853a10954b10e7f13189';
     Promise.all([
         jwcl.hash('abc'),
         jwcl.private.kdf('1234'),
-        jwcl.private._encrypt(iv, key, plaintext),
+        jwcl.private.encrypt(key, iv, plaintext),
         jwcl.private.decrypt(key, ciphertext),  
         jwcl.private.sign(key, message),
         jwcl.private.verify(key, signature, message)

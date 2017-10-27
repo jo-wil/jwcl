@@ -101,11 +101,12 @@ QUnit.test('jwcl.private.key', function (assert) {
 
 QUnit.test('jwcl.private encrypt decrypt', function (assert) {
     var done = assert.async();
+    var iv = '000000000000000000000000';
     var key;
     jwcl.private.key('encrypt')
     .then(function (result) {
         key = result;
-        return jwcl.private.encrypt(key, 'abc')
+        return jwcl.private.encrypt(key, iv, 'abc')
     })
     .then(function (ciphertext) {
         return jwcl.private.decrypt(key, ciphertext);
@@ -130,6 +131,72 @@ QUnit.test('jwcl.private sign verify', function (assert) {
         return Promise.all([
             jwcl.private.verify(key, signature, 'abc'),
             jwcl.private.verify(key, signature, 'abcd')
+        ]);
+    })
+    .then(function (results) {
+        assert.strictEqual(results[0], true, 'simple sign verify true');
+        assert.strictEqual(results[1], false, 'simple sign verify false');
+        done();
+    });
+});
+
+// Public
+
+// Key
+
+QUnit.test('jwcl.public key', function (assert) {
+    var done = assert.async();
+    var key;
+    jwcl.public.key('encrypt')
+    .then(function (result) {
+        key = result;
+        console.log('key', key);
+        assert.strictEqual(true, true);
+        return Promise.all([
+            window.crypto.subtle.exportKey('jwk', key.publicKey),
+            window.crypto.subtle.exportKey('jwk', key.privateKey)
+        ]);
+    })
+    .then(function (results) {
+        console.log('export key public', results[0]);
+        console.log('export key private', results[1]);
+        done();
+    });
+});
+
+// Encrypt and Decrypt
+
+QUnit.test('jwcl.public encrypt decrypt', function (assert) {
+    var done = assert.async();
+    var key;
+    jwcl.public.key('encrypt')
+    .then(function (result) {
+        key = result;
+        return jwcl.public.encrypt(key, 'abc')
+    })
+    .then(function (ciphertext) {
+        return jwcl.public.decrypt(key, ciphertext);
+    })
+    .then(function (plaintext) {
+        assert.strictEqual(plaintext, 'abc', 'simple encrypt decrypt');
+        done();
+    });
+});
+
+// Sign and Verify
+
+QUnit.test('jwcl.public sign verify', function (assert) {
+    var done = assert.async();
+    var key;
+    jwcl.public.key('sign')
+    .then(function (result) {
+        key = result;
+        return jwcl.public.sign(key, 'abc')
+    })
+    .then(function (signature) {
+        return Promise.all([
+            jwcl.public.verify(key, signature, 'abc'),
+            jwcl.public.verify(key, signature, 'abcd')
         ]);
     })
     .then(function (results) {
@@ -199,3 +266,5 @@ QUnit.test('jwcl sign verify', function (assert) {
         done();
     });
 });
+
+
